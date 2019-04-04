@@ -14,6 +14,7 @@ class SampleFilter: public Filter {
         int sample;
     public:
         SampleFilter(std::vector<std::string> args);
+        int filterFrame(cv::Mat &original, cv::Mat &processed);
 };
 
 #endif // ZPO_FILTER

@@ -28,7 +28,6 @@ int parseArgs(int nArgs, char **args, string &in, int *filter, vector<string> &f
     }
     in = args[1];
     out = args[nArgs - 1];
-    out += ".mp4";
     string filterName = args[2];
 
     string filters1[F1_CNT] = F1_ARR;
@@ -55,13 +54,17 @@ int parseArgs(int nArgs, char **args, string &in, int *filter, vector<string> &f
     return 1;
 }
 
-int initFilter(Filter &filter, int filterCode, vector<string> filterArgs) {
-    filter = SampleFilter(filterArgs);
+int initFilter(Filter **filter, int filterCode, vector<string> filterArgs) {
+    *filter = new SampleFilter(filterArgs); // TODO after filters are implemented this is unnecessary
     switch(filterCode) {
         case 10:
             // TODO
             break;
         case 11:
+            cout << "Using filter 'contrast'." << endl;
+            *filter = new ContrastFilter(filterArgs);
+            break;
+        case 12:
             // TODO
             break;
         case 20:
@@ -70,8 +73,14 @@ int initFilter(Filter &filter, int filterCode, vector<string> filterArgs) {
         case 21:
             // TODO
             break;
+        case 22:
+            // TODO
+            break;
+        default:
+            // return 1; // error
+            break;
     }
-    return 0; // TODO after some filters are implemented this will be error
+    return 0; // TODO after filters are implemented this will be error
 }
 
 int main(int argc, char **argv) {
@@ -99,16 +108,34 @@ int main(int argc, char **argv) {
     VideoWriter output(outputPath.c_str(), CV_FOURCC('a','v','c','1'), input.get(CAP_PROP_FPS), original.size());
 
     // initialize filter
-    Filter filter;
-    result = initFilter(filter, filterCode, filterArgs);
+    Filter *filter;
+    result = initFilter(&filter, filterCode, filterArgs);
     if (result != 0) return result;
 
     // main loop
+    int print_frame = input.get(CAP_PROP_FRAME_COUNT) / 20;
+    int counter = 1;
+    cout << "Render progress: [                    ]\r" << flush;
     while (!original.empty()) {
-        filter.filterFrame(original, processed);
+        
+        // print progress
+        if (counter % print_frame == 0) {
+            cout << "Render progress: [";
+            int i = 0;
+            for (; i < counter / print_frame; i++)
+                cout << "=";
+            for (int j = 0; j < 20 - i; j++)
+                cout << " ";
+            cout << "]\r" << flush;
+        }
+
+        // render
+        filter->filterFrame(original, processed);
         output.write(processed);
         input.read(original);
+        counter++;
     }
+    cout << "Render finished." << endl;
 
     // clean up
     input.release();
