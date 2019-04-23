@@ -1,11 +1,11 @@
 CC=g++
 CFLAGS=-Wall -I. -I/usr/local/include
 LIBS=-lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_videoio
-OBJ=main.o filter.o filters1.o filters2.o
+OBJ=main.o stabilize.o exposure_correct.o
 
-all: vidfilter oclean
+all: timelapse oclean
 
-vidfilter: $(OBJ)
+timelapse: $(OBJ)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
 
 %.o: %.cpp
