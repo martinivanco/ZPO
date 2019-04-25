@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 
     // output video
     Mat testsize = imread(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0));
-    VideoWriter output(outputPath.c_str(), CV_FOURCC('a','v','c','1'), framerate, testsize.size());
+    VideoWriter output(outputPath.c_str(), VideoWriter::fourcc('a','v','c','1'), framerate, testsize.size());
     for(int i = 0; i < imageNames.size(); i++) {
         Mat frame = imread(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i));
         output.write(frame);
