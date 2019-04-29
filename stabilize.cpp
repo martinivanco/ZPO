@@ -76,32 +76,33 @@ cv::Rect tl::get_crop_for_transform(int frameWidth, int frameHeight, double xCro
     roi.height -= 2 * roi.y;
 
     // crop to remove borders due to rotation
-    int quadrant = ((int) floor(angle / (TL_PI / 2))) & 3;
-    double signAlpha = (quadrant & 1) == 0 ? angle : TL_PI - angle;
-    double alpha = fmod(fmod(signAlpha, TL_PI) + TL_PI, TL_PI);
-    double bbw = roi.width * cos(alpha) + roi.height * sin(alpha);
-    double bbh = roi.width * sin(alpha) + roi.height * cos(alpha);
-    double gamma = roi.width < roi.height ? atan2(bbw, bbh) : atan2(bbh, bbw);
-    double delta = TL_PI - alpha - gamma;
-    int length = roi.width < roi.height ? roi.height : roi.width;
-    double d = length * cos(alpha);
-    double a = d * sin(alpha) / sin(delta);
-    int y = (int) ceil(a * cos(gamma));
-    int x = (int) ceil(y * tan(gamma));
-
-    roi.x += x;
-    roi.y += y;
-    roi.width -= 2 * x;
-    roi.height -= 2 * y;
+    int smin = roi.height < roi.width ? roi.height : roi.width;
+    int smax = roi.height < roi.width ? roi.width : roi.height;
+    // keep angle between 0 and 90
+    double a = angle > (TL_PI / 2.0) ? abs(angle - TL_PI) : abs(angle);
+    // compute bounding box
+    double sa = sin(a);
+    double ca = cos(a);
+    double bbmax = sa * smin + ca * smax;
+    double bbmin = sa * smax + ca * smin;
+    // compute inner rectangle
+    double saca = sa * ca;
+    double c = smax * saca / (2 * smax * saca + smin);
+    double rmin = bbmin - (2 * bbmin * c);
+    double rmax = bbmax - (2 * bbmax * c);
+    roi.x += (roi.width - (roi.height < roi.width ? (int) floor(rmax) : (int) floor(rmin))) / 2;
+    roi.y += (roi.height - (roi.height < roi.width ? (int) floor(rmin) : (int) floor(rmax))) / 2;
+    roi.width = roi.height < roi.width ? (int) floor(rmax) : (int) floor(rmin);
+    roi.height = roi.height < roi.width ? (int) floor(rmin) : (int) floor(rmax);
 
     // crop to 16:9 ratio
-    if (double(roi.width) / roi.height > 16.0 / 9.0) {
-        int newWidth = (int) round(16.0 / 9.0 * roi.width);
+    if (((double) roi.width) / (double (roi.height)) > 16.0 / 9.0) {
+        int newWidth = (int) round(16.0 / 9.0 * roi.height);
         roi.x += (roi.width - newWidth) / 2;
         roi.width = newWidth;
     }
     else {
-        int newHeight = (int) round(roi.height / (16.0 / 9.0));
+        int newHeight = (int) round(roi.width / 16.0 * 9.0);
         roi.y += (roi.height - newHeight) / 2;
         roi.height = newHeight;
     }
