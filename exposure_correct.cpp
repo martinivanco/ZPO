@@ -94,40 +94,72 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     cvtColor(prev_img, prev_img, COLOR_RGB2HSV);
 
+    printf("Here %d", 10);
+    Mat prev_hsv[3];
+
     int strengthcutoff = 20;
 
     for(int n=1; n<imageNames.size(); n++){
+
+        split(prev_img, prev_hsv);
 
         Mat img = imread(inputPath + imageNames.at(n), IMREAD_COLOR);
 
         Mat imghsv(img);
         cvtColor(img, imghsv, COLOR_RGB2HSV);
 
+        Mat hsv[3];
+        split(imghsv, hsv);
+
         int x,y;
 
         for(x = 0; x < img.rows; x++)
         {
-            for (y = 0; y < img.cols; y++){ ;
-                Vec3b intensity = imghsv.at<Vec3b>(x, y);
-                Vec3b prev_intensity = prev_img.at<Vec3b>(x, y);
+            for (y = 0; y < img.cols; y++){
 
-                int strength = abs(intensity.val[3] - prev_intensity.val[3]);
+                uint8_t intensity = hsv[2].at<uint8_t>(x, y);
+                uint8_t prev_intensity = prev_hsv[2].at<uint8_t>(x, y);
+
+                int strength = abs(intensity - prev_intensity);
 
                 if(strength < strengthcutoff){
 
                     // TODO: 0 -> 255 -> 0
 
-                    if(intensity.val[3] > prev_intensity.val[3]){
-                        intensity.val[3] = prev_intensity.val[3] + 1;
+                    if(intensity > prev_intensity){
+                        intensity = prev_intensity + 1;
                     }
                     else{
-                        intensity.val[3] = prev_intensity.val[3] - 1;
+                        intensity = prev_intensity - 1;
+                    }
+
+                    hsv[2].at<uint8_t>(x, y) = intensity;
+                }
+
+
+                /*
+                Vec3b intensity = imghsv.at<Vec3b>(x, y);
+                Vec3b prev_intensity = prev_img.at<Vec3b>(x, y);
+
+                int strength = abs(intensity.val[2] - prev_intensity.val[2]);
+
+                if(strength < strengthcutoff){
+
+                    // TODO: 0 -> 255 -> 0
+
+                    if(intensity.val[2] > prev_intensity.val[2]){
+                        intensity.val[2] = prev_intensity.val[2] + 1;
+                    }
+                    else{
+                        intensity.val[2] = prev_intensity.val[2] - 1;
                     }
 
                     imghsv.at<Vec3b>(x, y) = intensity;
-                }
+                }*/
             }
         }
+
+        merge(hsv, 3, imghsv);
 
         prev_img = imghsv.clone();
 
