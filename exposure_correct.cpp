@@ -10,7 +10,11 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     command += EXP_CORRECTED_TMP_FOLDER;
     system(command.c_str());
 
+    /*
+    *    ======================= EXPOSURE COMPENSATOR START ======================
+    */
 
+    /* NOT WORKING
     Ptr<ExposureCompensator> compensator = ExposureCompensator::createDefault(ExposureCompensator::GAIN);
     vector<Point> corners(imageNames.size());
     vector<Mat> images(imageNames.size());
@@ -32,7 +36,16 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
         compensator->apply(i,Point(0,0),uimages[i], mask);
         images[i] = uimages[i].getMat(ACCESS_RW);
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), images[i]);
-    }
+    } */
+
+    /*
+    *    ======================= EXPOSURE COMPENSATOR END ======================
+    */
+
+
+    /*
+    *    ======================= BORDEL START ======================
+    */
 
     /*
     cv::Mat image1 = cv::imread(inputPath + imageNames.at(0));
@@ -68,8 +81,14 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
         printf("file %d name: %s\n", e, imageNames[e].data());
     }*/
 
+    /*
+    *    ======================= BORDEL END ======================
+    */
+
 
     /*
+    *    ==================== EXPOSURE (2 FRAMES) START ======================
+    */
     Mat prev_img = imread(inputPath + imageNames.at(0), IMREAD_COLOR);
     cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), prev_img);
 
@@ -110,10 +129,14 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
             }
         }
 
-        prev_img = imghsv.clone();//clone the current one as the old one.
+        prev_img = imghsv.clone();
 
         cvtColor(imghsv, img, COLOR_HSV2RGB);
 
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
-    }*/
+    }
+
+    /*
+    *    ==================== EXPOSURE (2 FRAMES) END ======================
+    */
 }
