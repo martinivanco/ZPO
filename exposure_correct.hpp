@@ -14,6 +14,11 @@
 
 namespace tl {
     void exposure_correct(std::string inputPath, std::vector<std::string> imageNames);
+
+    void average_point(std::string inputPath, std::vector<std::string> imageNames);
+    void threshold_point(std::string inputPath, std::vector<std::string> imageNames, int threshold);
+    void average_frame_exp(std::string inputPath, std::vector<std::string> imageNames);
+    void average_frame_hsv(std::string inputPath, std::vector<std::string> imageNames);
 }
 
 #endif //ZPO_EXP_CORRECT
