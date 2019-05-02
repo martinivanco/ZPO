@@ -104,72 +104,8 @@ void tl::threshold_point(std::string inputPath, std::vector<std::string> imageNa
         prev_img = imghsv.clone();
 
         cvtColor(imghsv, img, COLOR_HSV2BGR);
-        // cv::resize(img, img, cv::Size(1200, 800));
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
     }
-
-
-    /*
-    Mat prev_img = imread(inputPath + imageNames.at(0), IMREAD_COLOR);
-    cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), prev_img);
-
-    cvtColor(prev_img, prev_img, COLOR_RGB2HSV);
-
-    Mat prev_hsv[3];
-
-    for(int n=1; n<imageNames.size(); n++){
-
-        split(prev_img, prev_hsv);
-
-        Mat img = imread(inputPath + imageNames.at(n), IMREAD_COLOR);
-
-        Mat imghsv(img);
-        cvtColor(img, imghsv, COLOR_RGB2HSV);
-
-        Mat hsv[3];
-        split(imghsv, hsv);
-
-        for(int x = 0; x < img.rows; x++)
-        {
-            for (int y = 0; y < img.cols; y++){
-
-                uint8_t intensity = hsv[2].at<uint8_t>(x, y);
-                uint8_t prev_intensity = prev_hsv[2].at<uint8_t>(x, y);
-
-                int diff = abs(intensity - prev_intensity);
-
-                if(diff < cutoff){
-
-                    if(intensity > prev_intensity){
-                        if(((uint8_t) (prev_intensity + 1)) < prev_intensity) {
-                            intensity = prev_intensity;
-                        }
-                        else {
-                            intensity = prev_intensity + 1;
-                        }
-                    }
-                    else{
-                        if(((uint8_t) (prev_intensity - 1)) > prev_intensity) {
-                            intensity = prev_intensity;
-                        }
-                        else {
-                            intensity = prev_intensity - 1;
-                        }
-                    }
-
-                    hsv[2].at<uint8_t>(x, y) = intensity;
-                }
-            }
-        }
-
-        merge(hsv, 3, imghsv);
-
-        prev_img = imghsv.clone();
-
-        cvtColor(imghsv, img, COLOR_HSV2RGB);
-
-        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
-    }*/
 }
 
 void tl::average_frame_exp(std::string inputPath, std::vector<std::string> imageNames) {
@@ -306,94 +242,90 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
 
 void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) {
 
-    vector<double> avg_h;
-    vector<double> avg_s;
-    vector<double> avg_v;
+    vector<double> avg_b;
+    vector<double> avg_g;
+    vector<double> avg_r;
 
     Mat img0 = imread(inputPath + imageNames.at(0));
-    //cvtColor(img0, img0, COLOR_BGR2HSV);
 
-    Mat hsv0[3];
-    split(img0, hsv0);
+    Mat bgr0[3];
+    split(img0, bgr0);
 
-    double avg_h0 = 0, avg_s0 = 0, avg_v0 = 0;
-    for(int x = 0; x < hsv0[0].rows; x++) {
-        for(int y = 0; y < hsv0[0].cols; y++) {
-            avg_h0 += hsv0[0].at<uint8_t>(x,y);
-            avg_s0 += hsv0[1].at<uint8_t>(x,y);
-            avg_v0 += hsv0[2].at<uint8_t>(x,y);
+    double avg_g0 = 0, avg_b0 = 0, avg_r0 = 0;
+    for(int x = 0; x < bgr0[0].rows; x++) {
+        for(int y = 0; y < bgr0[0].cols; y++) {
+            avg_b0 += bgr0[0].at<uint8_t>(x,y);
+            avg_g0 += bgr0[1].at<uint8_t>(x,y);
+            avg_r0 += bgr0[2].at<uint8_t>(x,y);
         }
     }
 
-    avg_h0 /= (img0.rows * img0.cols);
-    avg_s0 /= (img0.rows * img0.cols);
-    avg_v0 /= (img0.rows * img0.cols);
+    avg_b0 /= (img0.rows * img0.cols);
+    avg_g0 /= (img0.rows * img0.cols);
+    avg_r0 /= (img0.rows * img0.cols);
 
-    avg_h.push_back(avg_h0);
-    avg_s.push_back(avg_s0);
-    avg_v.push_back(avg_v0);
+    avg_b.push_back(avg_b0);
+    avg_g.push_back(avg_g0);
+    avg_r.push_back(avg_r0);
 
     Mat img1, img2;
-    Mat hsv1[3], hsv2[3];
+    Mat bgr1[3], bgr2[3];
 
-    Mat delta_h(img1.rows, img1.cols, CV_64F);
-    Mat delta_s(img1.rows, img1.cols, CV_64F);
-    Mat delta_v(img1.rows, img1.cols, CV_64F);
+    Mat delta_b(img1.rows, img1.cols, CV_64F);
+    Mat delta_g(img1.rows, img1.cols, CV_64F);
+    Mat delta_r(img1.rows, img1.cols, CV_64F);
 
     img1 = imread(inputPath + imageNames.at(1));
-    //cvtColor(img1, img1, COLOR_BGR2HSV);
-    split(img1, hsv1);
+    split(img1, bgr1);
 
-    // TODO!!!!!!!!!!!
     double threshold = 30;
 
     for(int i = 1; i < imageNames.size()-1; i++) {
 
         img2 = imread(inputPath + imageNames.at(i+1));
-        //cvtColor(img2, img2, COLOR_BGR2HSV);
 
-        split(img2, hsv2);
+        split(img2, bgr2);
 
-        delta_h = hsv1[0] - hsv2[0];
-        delta_s = hsv1[1] - hsv2[1];
-        delta_v = hsv1[2] - hsv2[2];
+        delta_b = bgr1[0] - bgr2[0];
+        delta_g = bgr1[1] - bgr2[1];
+        delta_r = bgr1[2] - bgr2[2];
 
-        double mean_delta_h = 0;
-        double mean_delta_s = 0;
-        double mean_delta_v = 0;
+        double mean_delta_b = 0;
+        double mean_delta_g = 0;
+        double mean_delta_r = 0;
 
-        for(int x = 0; x < delta_h.rows; x++){
-            for(int y = 0; y < delta_h.cols; y++){
+        for(int x = 0; x < delta_b.rows; x++){
+            for(int y = 0; y < delta_b.cols; y++){
 
-                if(abs(delta_h.at<double>(x,y)) > threshold){
-                    delta_h.at<double>(x,y) = 0;
+                if(abs(delta_b.at<double>(x,y)) > threshold){
+                    delta_b.at<double>(x,y) = 0;
                 }
 
-                if(abs(delta_s.at<double>(x,y)) > threshold){
-                    delta_s.at<double>(x,y) = 0;
+                if(abs(delta_g.at<double>(x,y)) > threshold){
+                    delta_g.at<double>(x,y) = 0;
                 }
 
-                if(abs(delta_v.at<double>(x,y)) > threshold){
-                    delta_v.at<double>(x,y) = 0;
+                if(abs(delta_r.at<double>(x,y)) > threshold){
+                    delta_r.at<double>(x,y) = 0;
                 }
 
-                mean_delta_h += delta_h.at<double>(x,y);
-                mean_delta_s += delta_s.at<double>(x,y);
-                mean_delta_v += delta_v.at<double>(x,y);
+                mean_delta_b += delta_b.at<double>(x,y);
+                mean_delta_g += delta_g.at<double>(x,y);
+                mean_delta_r += delta_r.at<double>(x,y);
             }
         }
 
-        mean_delta_h /= (delta_h.cols * delta_h.rows);
-        mean_delta_s /= (delta_h.cols * delta_h.rows);
-        mean_delta_v /= (delta_h.cols * delta_h.rows);
+        mean_delta_b /= (delta_b.cols * delta_b.rows);
+        mean_delta_g /= (delta_b.cols * delta_b.rows);
+        mean_delta_r /= (delta_b.cols * delta_b.rows);
 
-        avg_h.push_back((avg_h[i - 1]) + mean_delta_h);
-        avg_s.push_back((avg_s[i - 1]) + mean_delta_s);
-        avg_v.push_back((avg_v[i - 1]) + mean_delta_v);
+        avg_b.push_back((avg_b[i - 1]) + mean_delta_b);
+        avg_g.push_back((avg_g[i - 1]) + mean_delta_g);
+        avg_r.push_back((avg_r[i - 1]) + mean_delta_r);
 
-        hsv1[0] = hsv2[0].clone();
-        hsv1[1] = hsv2[1].clone();
-        hsv1[2] = hsv2[2].clone();
+        bgr1[0] = bgr2[0].clone();
+        bgr1[1] = bgr2[1].clone();
+        bgr1[2] = bgr2[2].clone();
     }
 
 
@@ -403,69 +335,61 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         int lower_bound = i - window < 0 ? 0 : i - window;
         int upper_bound = i + window > imageNames.size() - 1 ? imageNames.size() - 1 : i + window;
 
-        double sum_h = 0;
-        double sum_s = 0;
-        double sum_v = 0;
+        double sum_b = 0;
+        double sum_g = 0;
+        double sum_r = 0;
 
         for (int j = lower_bound; j <= upper_bound; j++) {
-            sum_h += avg_h[j];
-            sum_s += avg_s[j];
-            sum_v += avg_v[j];
+            sum_b += avg_b[j];
+            sum_g += avg_g[j];
+            sum_r += avg_r[j];
         }
 
-        double diff_h = (sum_h / (upper_bound - lower_bound + 1));
-        double diff_s = (sum_s / (upper_bound - lower_bound + 1));
-        double diff_v = (sum_v / (upper_bound - lower_bound + 1));
+        double diff_b = (sum_b / (upper_bound - lower_bound + 1));
+        double diff_g = (sum_g / (upper_bound - lower_bound + 1));
+        double diff_r = (sum_r / (upper_bound - lower_bound + 1));
 
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
         //cvtColor(image, image, COLOR_BGR2HSV);
 
-        Mat hsv[3];
-        split(image, hsv);
+        Mat bgr[3];
+        split(image, bgr);
 
-        double img_avg_h = 0;
-        double img_avg_s = 0;
-        double img_avg_v = 0;
+        double img_avg_b = 0;
+        double img_avg_g = 0;
+        double img_avg_r = 0;
 
         for(int x = 0; x < image.rows; x++){
             for(int y = 0; y < image.cols; y++){
-                img_avg_h += hsv[0].at<uint8_t>(x,y);
-                img_avg_s += hsv[1].at<uint8_t>(x,y);
-                img_avg_v += hsv[2].at<uint8_t>(x,y);
+                img_avg_b += bgr[0].at<uint8_t>(x,y);
+                img_avg_g += bgr[1].at<uint8_t>(x,y);
+                img_avg_r += bgr[2].at<uint8_t>(x,y);
             }
         }
 
-        img_avg_h /= (image.rows * image.cols);
-        img_avg_s /= (image.rows * image.cols);
-        img_avg_v /= (image.rows * image.cols);
+        img_avg_b /= (image.rows * image.cols);
+        img_avg_g /= (image.rows * image.cols);
+        img_avg_r /= (image.rows * image.cols);
 
-        diff_h -= img_avg_h;
-        diff_s -= img_avg_s;
-        diff_v -= img_avg_v;
+        diff_b -= img_avg_b;
+        diff_g -= img_avg_g;
+        diff_r -= img_avg_r;
 
-        std::cout << "Check: " << unsigned(hsv[2].at<uint8_t>(24,26)) << " -> ";
+        std::cout << "Check: " << unsigned(bgr[2].at<uint8_t>(24,26)) << " -> ";
 
         for (int x = 0; x < image.rows; x++) {
             for (int y = 0; y < image.cols; y++) {
-                if(hsv[0].at<uint8_t>(x, y) > 20 and hsv[1].at<uint8_t>(x, y) > 20 and hsv[2].at<uint8_t>(x, y) > 20){
-                    hsv[0].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[0].at<uint8_t>(x, y)) + diff_h);
-                    hsv[1].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[1].at<uint8_t>(x, y)) + diff_s);
-                    hsv[2].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[2].at<uint8_t>(x, y)) + diff_v);
+                if(bgr[0].at<uint8_t>(x, y) > 20 and bgr[1].at<uint8_t>(x, y) > 20 and bgr[2].at<uint8_t>(x, y) > 20){
+                    bgr[0].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(bgr[0].at<uint8_t>(x, y)) + diff_b);
+                    bgr[1].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(bgr[1].at<uint8_t>(x, y)) + diff_g);
+                    bgr[2].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(bgr[2].at<uint8_t>(x, y)) + diff_r);
                 }
             }
         }
 
-        /*
-        hsv[0].convertTo(hsv[0], -1, 1, diff_h);
-        hsv[1].convertTo(hsv[1], -1, 1, diff_s);
-        hsv[2].convertTo(hsv[2], -1, 1, diff_v);
-         */
+        std::cout << unsigned(bgr[2].at<uint8_t>(24,26)) << std::endl;
 
-        std::cout << unsigned(hsv[2].at<uint8_t>(24,26)) << std::endl;
-
-        merge(hsv, 3, image);
-
-        //cvtColor(image, image, COLOR_HSV2BGR);
+        merge(bgr, 3, image);
 
         imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
     }
@@ -481,11 +405,11 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     // average_point(inputPath, imageNames);
 
-    //threshold_point(inputPath, imageNames, 20);
+    // threshold_point(inputPath, imageNames, 20);
 
-    //average_frame_exp(inputPath, imageNames);
+    // average_frame_exp(inputPath, imageNames);
 
-    //average_frame_hsv(inputPath, imageNames);
+    // average_frame_hsv(inputPath, imageNames);
 
     experiment(inputPath, imageNames);
 }
