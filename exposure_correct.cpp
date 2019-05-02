@@ -12,57 +12,93 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     /*
     *    ======================= EXPOSURE COMPENSATOR START ======================
+    *    Probably we can not use this for our problem
     */
 
-    /* NOT WORKING
+    /*
     Ptr<ExposureCompensator> compensator = ExposureCompensator::createDefault(ExposureCompensator::GAIN);
+
     vector<Point> corners(imageNames.size());
-    vector<Mat> images(imageNames.size());
     vector<UMat> uimages(imageNames.size());
-    vector<UMat> masks(imageNames.size());
+    vector<std::pair<UMat, uchar>> masks(imageNames.size());
 
     for(int i=0; i<imageNames.size(); i++){
         corners[i] = Point(0,0);
-        images[i] = imread(inputPath + imageNames[i], IMREAD_COLOR);
-        uimages[i] = images[i].getUMat(ACCESS_RW);
-        masks[i] = UMat::ones(uimages[i].rows, uimages[i].cols, CV_8U);
+        uimages[i] = imread(inputPath + imageNames.at(i), IMREAD_COLOR).getUMat(ACCESS_RW);
+        masks[i].first = UMat::zeros(uimages.at(i).rows, uimages.at(i).cols, CV_8U);
+        masks[i].second = 0;//255;
     }
 
     compensator->feed(corners, uimages, masks);
 
-    Mat mask = Mat::ones(images[0].rows,images[0].cols, CV_8U);
+    UMat output(uimages.at(0).rows, uimages.at(0).cols, uimages.at(0).type());
+    Mat mask = Mat::zeros(uimages[0].rows,uimages[0].cols, CV_8U);
 
     for(int i=0; i < imageNames.size(); i++) {
-        compensator->apply(i,Point(0,0),uimages[i], mask);
-        images[i] = uimages[i].getMat(ACCESS_RW);
-        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), images[i]);
+        compensator->apply(i,Point(0,0), output, mask);
+        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), output.getMat(ACCESS_READ));// uimages.at(i).getMat(ACCESS_READ));
     } */
 
     /*
     *    ======================= EXPOSURE COMPENSATOR END ======================
     */
 
+    /*
+    *    =================== 3 FRAMES ACCUMULATED START ==================
+    */
+    ///TODO: Look at this!
+
+
+    cv::Mat image1 = cv::imread(inputPath + imageNames.at(0));
+    cv::Mat image2 = cv::imread(inputPath + imageNames.at(1));
+
+    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image1);
+
+    Mat imghsv1(image1.rows, image1.cols, image1.type());
+    Mat imghsv2(image2.rows, image2.cols, image2.type());
+    Mat imghsv3(image2.rows, image2.cols, image2.type());
+
+    cvtColor(image1, imghsv1, COLOR_RGB2HSV);
+    cvtColor(image2, imghsv2, COLOR_RGB2HSV);
+
+    Mat hsv1[3], hsv2[3], hsv3[3];
+
+    split(imghsv1, hsv1);
+
+    cv::Mat accumulator(imghsv1.rows, imghsv1.cols, CV_32F);
+
+    for(int i=2; i < imageNames.size(); i++) {
+        Mat image3 = imread(inputPath + imageNames.at(i));
+
+        cvtColor(image3, imghsv3, COLOR_RGB2HSV);
+
+        split(imghsv2, hsv2);
+        split(imghsv3, hsv3);
+
+        accumulateWeighted(hsv1[2], accumulator, 0.3);
+        accumulateWeighted(hsv2[2], accumulator, 0.3);
+        accumulateWeighted(hsv3[2], accumulator, 0.3);
+
+        convertScaleAbs(accumulator, hsv2[2]);
+
+        merge(hsv2, 3, imghsv2);
+        cvtColor(imghsv2, image2, COLOR_HSV2RGB);
+
+        imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i-1), image2);
+
+        hsv1[2] = hsv2[2].clone();
+        imghsv2 = imghsv3.clone();
+    }
+    
+
+    /*
+    *    =================== 3 FRAMES ACCUMULATED END ==================
+    */
+
 
     /*
     *    ======================= BORDEL START ======================
     */
-
-    /*
-    cv::Mat image1 = cv::imread(inputPath + imageNames.at(0));
-    cv::Mat image2 = cv::imread(inputPath + imageNames.at(1));
-
-    cv::Mat output;
-    Mat frame;
-    Mat gray = Mat::zeros(image1.rows, image1.cols, CV_32FC3);
-
-    cvtColor(image2 ,gray , CV_8UC3, 0);
-    accumulateWeighted(image1, gray, 0.005);
-
-    while(1){
-        imshow("gray", gray);
-        imshow("acc", image1);
-        waitKey(1); //don't know why I need it but without it the windows freezes
-    }*/
 
     //cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), output);
     //cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), output)
@@ -89,6 +125,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     /*
     *    ==================== EXPOSURE (2 FRAMES) START ======================
     */
+
     Mat prev_img = imread(inputPath + imageNames.at(0), IMREAD_COLOR);
     cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), prev_img);
 
@@ -124,38 +161,25 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
                 if(strength < strengthcutoff){
 
-                    // TODO: 0 -> 255 -> 0
-
                     if(intensity > prev_intensity){
-                        intensity = prev_intensity + 1;
+                        if(((uint8_t) (prev_intensity + 1)) < prev_intensity) {
+                            intensity = prev_intensity;
+                        }
+                        else {
+                            intensity = prev_intensity + 1;
+                        }
                     }
                     else{
-                        intensity = prev_intensity - 1;
+                        if(((uint8_t) (prev_intensity - 1)) > prev_intensity) {
+                            intensity = prev_intensity;
+                        }
+                        else {
+                            intensity = prev_intensity - 1;
+                        }
                     }
 
                     hsv[2].at<uint8_t>(x, y) = intensity;
                 }
-
-
-                /*
-                Vec3b intensity = imghsv.at<Vec3b>(x, y);
-                Vec3b prev_intensity = prev_img.at<Vec3b>(x, y);
-
-                int strength = abs(intensity.val[2] - prev_intensity.val[2]);
-
-                if(strength < strengthcutoff){
-
-                    // TODO: 0 -> 255 -> 0
-
-                    if(intensity.val[2] > prev_intensity.val[2]){
-                        intensity.val[2] = prev_intensity.val[2] + 1;
-                    }
-                    else{
-                        intensity.val[2] = prev_intensity.val[2] - 1;
-                    }
-
-                    imghsv.at<Vec3b>(x, y) = intensity;
-                }*/
             }
         }
 
