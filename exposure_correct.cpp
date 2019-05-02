@@ -447,10 +447,10 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
 
         for (int x = 0; x < image.rows; x++) {
             for (int y = 0; y < image.cols; y++) {
-                if(hsv[0].at<uint8_t>(x, y) > 20 and hsv[0].at<uint8_t>(x, y) > 20 and hsv[0].at<uint8_t>(x, y) > 20){
-                    hsv[0].at<uint8_t>(x, y) = saturate_cast<uint8_t>(hsv[0].at<uint8_t>(x, y) + diff_h);
-                    hsv[1].at<uint8_t>(x, y) = saturate_cast<uint8_t>(hsv[1].at<uint8_t>(x, y) + diff_s);
-                    hsv[2].at<uint8_t>(x, y) = saturate_cast<uint8_t>(hsv[2].at<uint8_t>(x, y) + diff_v);
+                if(hsv[0].at<uint8_t>(x, y) > 20 and hsv[1].at<uint8_t>(x, y) > 20 and hsv[2].at<uint8_t>(x, y) > 20){
+                    hsv[0].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[0].at<uint8_t>(x, y)) + diff_h);
+                    hsv[1].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[1].at<uint8_t>(x, y)) + diff_s);
+                    hsv[2].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(hsv[2].at<uint8_t>(x, y)) + diff_v);
                 }
             }
         }
