@@ -46,51 +46,81 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     */
 
 
-    vector<double> average_exp;
+    // vector<double> average_exp;
+    // vector<double> average_hue;
+    // vector<double> average_sat;
 
-    for(int i = 0; i < imageNames.size(); i++){
-        cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+    // for(int i = 0; i < imageNames.size(); i++){
+    //     cv::Mat image = cv::imread(inputPath + imageNames.at(i));
 
-        cvtColor(image, image, COLOR_BGR2HSV);
+    //     cvtColor(image, image, COLOR_BGR2HSV);
 
-        Mat hsv[3];
-        split(image, hsv);
+    //     Mat hsv[3];
+    //     split(image, hsv);
 
-        double exp_sum = 0;
+    //     double exp_sum = 0;
+    //     double hue_sum = 0;
+    //     double sat_sum = 0;
 
-        for (int x = 0; x < image.rows; ++x) {
-            for(int y = 0; y < image.cols; y++){
-                exp_sum += (double) hsv[2].at<uint8_t>(x,y);
-            }
-        }
+    //     for (int x = 0; x < image.rows; x++) {
+    //         for(int y = 0; y < image.cols; y++){
+    //             hue_sum += (double) hsv[0].at<uint8_t>(x,y);
+    //             sat_sum += (double) hsv[1].at<uint8_t>(x,y);
+    //             exp_sum += (double) hsv[2].at<uint8_t>(x,y);
+    //         }
+    //     }
 
-        average_exp.push_back(exp_sum / (image.rows * image.cols));
-    }
+    //     average_exp.push_back(exp_sum / (image.rows * image.cols));
+    //     average_sat.push_back(sat_sum / (image.rows * image.cols));
+    //     average_hue.push_back(hue_sum / (image.rows * image.cols));
+    // }
 
-    cv::Mat image = cv::imread(inputPath + imageNames.at(0));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image);
-    image = cv::imread(inputPath + imageNames.at(1));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(1), image);
+    // // cv::Mat image = cv::imread(inputPath + imageNames.at(0));
+    // // imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image);
+    // // image = cv::imread(inputPath + imageNames.at(1));
+    // // imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(1), image);
 
-    for(int i = 2; i < imageNames.size() - 2; i++){
-        cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+    // for(int i = 0; i < imageNames.size(); i++){
+    //     cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+    //     cvtColor(image, image, COLOR_BGR2HSV);
 
-        double exp_diff = ((average_exp[i-2] + average_exp[i-1] + average_exp[i] + average_exp[i+1] + average_exp[i+2]) / 5) - average_exp[i];
+    //     int comp = 30;
+    //     int lower_bound = i - comp < 0 ? 0 : i - comp;
+    //     int upper_bound = i + comp > imageNames.size() - 1 ? imageNames.size() - 1 : i + comp;
+    //     double exp_sum = 0;
+    //     double hue_sum = 0;
+    //     double sat_sum = 0;
+    //     for (int j = lower_bound; j <= upper_bound; j++) {
+    //         exp_sum += average_exp[j];
+    //         hue_sum += average_hue[j];
+    //         sat_sum += average_sat[j];
+    //     }
+    //     double exp_diff = (exp_sum / (upper_bound - lower_bound + 1)) - average_exp[i];
+    //     double hue_diff = (hue_sum / (upper_bound - lower_bound + 1)) - average_hue[i];
+    //     double sat_diff = (sat_sum / (upper_bound - lower_bound + 1)) - average_sat[i];
+    //     std::cout << "Diffs: " << exp_diff << " " << hue_diff << " " << sat_diff << std::endl;
 
-        Mat hsv[3];
-        split(image, hsv);
+    //     Mat hsv[3];
+    //     split(image, hsv);
 
-        hsv[2] += exp_diff;
+    //     std::cout << "Check: " << unsigned(hsv[2].at<uint8_t>(24,26)) << " -> ";
+    //     // hsv[0] += hue_diff;
+    //     // hsv[1] += sat_diff;
+    //     hsv[2] += 100;
+    //     // hsv[2].convertTo(hsv[2], -1, 1, exp_diff);
+    //     std::cout << unsigned(hsv[2].at<uint8_t>(24,26)) << std::endl;
 
-        merge(hsv, 3, image);
+    //     merge(hsv, 3, image);
 
-        imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
-    }
+    //     cvtColor(image, image, COLOR_HSV2BGR);
 
-    image = cv::imread(inputPath + imageNames.at(imageNames.size()-2));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-2), image);
-    image = cv::imread(inputPath + imageNames.at(imageNames.size()-1));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
+    //     imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
+    // }
+
+    // image = cv::imread(inputPath + imageNames.at(imageNames.size()-2));
+    // imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-2), image);
+    // image = cv::imread(inputPath + imageNames.at(imageNames.size()-1));
+    // imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
 
 
     /*
@@ -177,15 +207,15 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     *    ==================== EXPOSURE (2 FRAMES) START ======================
     */
 
-    /*
+    
     Mat prev_img = imread(inputPath + imageNames.at(0), IMREAD_COLOR);
     cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), prev_img);
 
-    cvtColor(prev_img, prev_img, COLOR_RGB2HSV);
+    cvtColor(prev_img, prev_img, COLOR_BGR2HSV);
 
     Mat prev_hsv[3];
 
-    int strengthcutoff = 20;
+    int strengthcutoff = 30;
 
     for(int n=1; n<imageNames.size(); n++){
 
@@ -194,7 +224,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
         Mat img = imread(inputPath + imageNames.at(n), IMREAD_COLOR);
 
         Mat imghsv(img);
-        cvtColor(img, imghsv, COLOR_RGB2HSV);
+        cvtColor(img, imghsv, COLOR_BGR2HSV);
 
         Mat hsv[3];
         split(imghsv, hsv);
@@ -211,22 +241,16 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
                 int strength = abs(intensity - prev_intensity);
 
                 if(strength < strengthcutoff){
-
+                    int diff = int(intensity) - int(prev_intensity);
+                    // std::cout << diff << std::endl;
+                    if (abs(diff) > 10)
+                        diff = diff < 0 ? -10 : 10;
+                    
                     if(intensity > prev_intensity){
-                        if(((uint8_t) (prev_intensity + 1)) < prev_intensity) {
-                            intensity = prev_intensity;
-                        }
-                        else {
-                            intensity = prev_intensity + 1;
-                        }
+                        intensity = saturate_cast<uint8_t>(prev_intensity + diff);
                     }
                     else{
-                        if(((uint8_t) (prev_intensity - 1)) > prev_intensity) {
-                            intensity = prev_intensity;
-                        }
-                        else {
-                            intensity = prev_intensity - 1;
-                        }
+                        intensity = saturate_cast<uint8_t>(prev_intensity - diff);
                     }
 
                     hsv[2].at<uint8_t>(x, y) = intensity;
@@ -238,10 +262,10 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
         prev_img = imghsv.clone();
 
-        cvtColor(imghsv, img, COLOR_HSV2RGB);
-
+        cvtColor(imghsv, img, COLOR_HSV2BGR);
+        // cv::resize(img, img, cv::Size(1200, 800));
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
-    }*/
+    }
 
     /*
     *    ==================== EXPOSURE (2 FRAMES) END ======================

@@ -137,9 +137,9 @@ std::vector<tl::Transform> tl::no_motion(std::vector<tl::Transform> &transforms,
     
     for (int i = 0; i < transforms.size(); i++) {
         double sx = cX - trajectory.at(i).x() + transforms.at(i).x();
-        maxX = sx > maxX ? sx : maxX;
+        maxX = abs(sx) > maxX ? abs(sx) : maxX;
         double sy = cY - trajectory.at(i).y() + transforms.at(i).y();
-        maxY = sy > maxY ? sy : maxY;
+        maxY = abs(sy) > maxY ? abs(sy) : maxY;
         double sa = cA - trajectory.at(i).a() + transforms.at(i).a();
         maxA = abs(cos(sa)) < maxA ? abs(cos(sa)) : maxA;
         stableTransforms.push_back(tl::Transform(sx, sy, sa));
