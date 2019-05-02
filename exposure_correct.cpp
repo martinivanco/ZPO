@@ -45,11 +45,56 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     *    ======================= EXPOSURE COMPENSATOR END ======================
     */
 
+
+    vector<double> average_exp;
+
+    for(int i = 0; i < imageNames.size(); i++){
+        cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+
+        cvtColor(image, image, COLOR_BGR2HSV);
+
+        Mat hsv[3];
+        split(image, hsv);
+
+        double exp_sum = 0;
+
+        for (int x = 0; x < image.rows; ++x) {
+            for(int y = 0; y < image.cols; y++){
+                exp_sum += (double) hsv[2].at<uint8_t>(x,y);
+            }
+        }
+
+        average_exp.push_back(exp_sum / (image.rows * image.cols));
+    }
+
+    cv::Mat image = cv::imread(inputPath + imageNames.at(0));
+    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image);
+
+    for(int i = 1; i < imageNames.size()-1; i++){
+        cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+
+        double exp_diff = ((average_exp[i-1] + average_exp[i] + average_exp[i+1]) / 3) - average_exp[i];
+
+        Mat hsv[3];
+        split(image, hsv);
+
+        hsv[2] += exp_diff;
+
+        merge(hsv, 3, image);
+
+        imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
+    }
+
+    image = cv::imread(inputPath + imageNames.at(imageNames.size()-1));
+    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
+
+
     /*
     *    =================== 3 FRAMES ACCUMULATED START ==================
     */
     ///TODO: Look at this!
 
+    /*
 
     cv::Mat image1 = cv::imread(inputPath + imageNames.at(0));
     cv::Mat image2 = cv::imread(inputPath + imageNames.at(1));
@@ -90,7 +135,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
         hsv1[2] = hsv2[2].clone();
         imghsv2 = imghsv3.clone();
-    }
+    }*/
     
 
     /*
@@ -128,12 +173,12 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
     *    ==================== EXPOSURE (2 FRAMES) START ======================
     */
 
+    /*
     Mat prev_img = imread(inputPath + imageNames.at(0), IMREAD_COLOR);
     cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), prev_img);
 
     cvtColor(prev_img, prev_img, COLOR_RGB2HSV);
 
-    printf("Here %d", 10);
     Mat prev_hsv[3];
 
     int strengthcutoff = 20;
@@ -192,7 +237,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
         cvtColor(imghsv, img, COLOR_HSV2RGB);
 
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
-    }
+    }*/
 
     /*
     *    ==================== EXPOSURE (2 FRAMES) END ======================
