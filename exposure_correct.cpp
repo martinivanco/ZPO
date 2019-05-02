@@ -169,7 +169,7 @@ void tl::threshold_point(std::string inputPath, std::vector<std::string> imageNa
         cvtColor(imghsv, img, COLOR_HSV2RGB);
 
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(n), img);
-    }
+    }*/
 }
 
 }
