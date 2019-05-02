@@ -43,7 +43,7 @@ int parseArgs(int nArgs, char **args, string &in, string &out, vector<string> &i
                 part = filename.substr(0, pos);
                 filename.erase(0, pos + 1);
             }
-            if ((part.empty()) || (filename.compare("jpg") != 0))
+            if ((part.empty()) || ((filename.compare("jpg") != 0) && (filename.compare("JPG") != 0)))
                 continue;
             images.push_back(ent->d_name);
         }
