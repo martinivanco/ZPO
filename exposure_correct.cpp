@@ -69,11 +69,13 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     cv::Mat image = cv::imread(inputPath + imageNames.at(0));
     imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image);
+    image = cv::imread(inputPath + imageNames.at(1));
+    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(1), image);
 
-    for(int i = 1; i < imageNames.size()-1; i++){
+    for(int i = 2; i < imageNames.size() - 2; i++){
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
 
-        double exp_diff = ((average_exp[i-1] + average_exp[i] + average_exp[i+1]) / 3) - average_exp[i];
+        double exp_diff = ((average_exp[i-2] + average_exp[i-1] + average_exp[i] + average_exp[i+1] + average_exp[i+2]) / 5) - average_exp[i];
 
         Mat hsv[3];
         split(image, hsv);
@@ -85,6 +87,8 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
         imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
     }
 
+    image = cv::imread(inputPath + imageNames.at(imageNames.size()-2));
+    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-2), image);
     image = cv::imread(inputPath + imageNames.at(imageNames.size()-1));
     imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
 
