@@ -215,17 +215,13 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
         double exp_diff = (exp_sum / (upper_bound - lower_bound + 1)) - average_exp[i];
         double hue_diff = (hue_sum / (upper_bound - lower_bound + 1)) - average_hue[i];
         double sat_diff = (sat_sum / (upper_bound - lower_bound + 1)) - average_sat[i];
-        std::cout << "Diffs: " << exp_diff << " " << hue_diff << " " << sat_diff << std::endl;
 
         Mat hsv[3];
         split(image, hsv);
 
-        std::cout << "Check: " << unsigned(hsv[2].at<uint8_t>(24,26)) << " -> ";
-        // hsv[0] += hue_diff;
-        // hsv[1] += sat_diff;
-        hsv[2] += 100;
-        // hsv[2].convertTo(hsv[2], -1, 1, exp_diff);
-        std::cout << unsigned(hsv[2].at<uint8_t>(24,26)) << std::endl;
+        hsv[0] += hue_diff;
+        hsv[1] += sat_diff;
+        hsv[2] += exp_diff;
 
         merge(hsv, 3, image);
 
@@ -350,7 +346,6 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         double diff_r = (sum_r / (upper_bound - lower_bound + 1));
 
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
-        //cvtColor(image, image, COLOR_BGR2HSV);
 
         Mat bgr[3];
         split(image, bgr);
@@ -375,8 +370,6 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         diff_g -= img_avg_g;
         diff_r -= img_avg_r;
 
-        std::cout << "Check: " << unsigned(bgr[2].at<uint8_t>(24,26)) << " -> ";
-
         for (int x = 0; x < image.rows; x++) {
             for (int y = 0; y < image.cols; y++) {
                 if(bgr[0].at<uint8_t>(x, y) > 20 and bgr[1].at<uint8_t>(x, y) > 20 and bgr[2].at<uint8_t>(x, y) > 20){
@@ -386,8 +379,6 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
                 }
             }
         }
-
-        std::cout << unsigned(bgr[2].at<uint8_t>(24,26)) << std::endl;
 
         merge(bgr, 3, image);
 
