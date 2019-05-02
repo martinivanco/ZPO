@@ -1,4 +1,6 @@
+#ifdef CUSTOM_OPENCV_LOCATION
 #include <cv.hpp>
+#endif //CUSTOM_OPENCV_LOCATION
 #include "exposure_correct.hpp"
 
 using namespace std;

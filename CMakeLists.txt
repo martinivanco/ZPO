@@ -9,11 +9,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 project(timelapse)
 set(CMAKE_CXX_FLAGS "-std=c++11 -O3")
 
-set(OpenCV_DIR /usr/local/share/OpenCV)
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
 # via the command line or GUI
 find_package(OpenCV REQUIRED)
+if(NOT OpenCV_FOUND)
+    set(OpenCV_DIR /usr/local/share/OpenCV)
+    add_compile_definitions(CUSTOM_OPENCV_LOCATION)
+endif(NOT OpenCV_FOUND)
 
 # If the package has been found, several variables will
 # be set, you can find the full list with descriptions
