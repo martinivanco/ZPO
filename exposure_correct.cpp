@@ -172,8 +172,6 @@ void tl::threshold_point(std::string inputPath, std::vector<std::string> imageNa
     }*/
 }
 
-}
-
 void tl::average_frame_exp(std::string inputPath, std::vector<std::string> imageNames) {
     std::string command("mkdir -p ");
     command += EXP_CORRECTED_TMP_FOLDER;
