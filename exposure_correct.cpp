@@ -304,6 +304,129 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
     imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
 }
 
+void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) {
+
+    vector<double> luminance;
+
+    Mat img1, img2, img3;
+    Mat hsv1[3], hsv2[3], hsv3[3];
+
+    img1 = imread(inputPath + imageNames.at(0));
+    // imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), img1);
+    cvtColor(img1, img1, COLOR_BGR2HSV);
+    split(img1, hsv1);
+
+    double lum1 = 0;
+    for(int x = 0; x < hsv1[2].rows; x++) {
+        for(int y = 0; y < hsv1[2].cols; y++) {
+            lum1 += hsv1[2].at<uint8_t>(x,y);
+        }
+    }
+
+    lum1 /= (hsv1->cols * hsv1->rows);
+
+    luminance.push_back(lum1);
+
+    Mat delta(img1.rows, img1.cols, CV_64F);
+
+    // TODO!!!!!!!!!!!
+    double threshold = 40;
+
+    for(int i = 1; i < imageNames.size()-1; i++) {
+        img2 = imread(inputPath + imageNames.at(i));
+        img3 = imread(inputPath + imageNames.at(i+1));
+
+        cvtColor(img2, img2, COLOR_BGR2HSV);
+        cvtColor(img3, img3, COLOR_BGR2HSV);
+
+        split(img2, hsv2);
+        split(img3, hsv3);
+
+        delta = hsv2[2] - hsv3[2];
+
+        double mean_delta = 0;
+
+        for(int x = 0; x < delta.rows; x++){
+            for(int y = 0; y < delta.cols; y++){
+
+                if(abs(delta.at<double>(x,y)) > threshold){
+                    delta.at<double>(x,y) = 0;
+                }
+
+                mean_delta += delta.at<double>(x,y);
+            }
+        }
+
+        mean_delta /= (delta.cols * delta.rows);
+
+        luminance.push_back((luminance[i - 1]) + mean_delta);
+    }
+
+
+    for(int i = 0; i < imageNames.size(); i++){
+
+        int window = 30;
+        int lower_bound = i - window < 0 ? 0 : i - window;
+        int upper_bound = i + window > imageNames.size() - 1 ? imageNames.size() - 1 : i + window;
+        double exp_sum = 0;
+        //double hue_sum = 0;
+        //double sat_sum = 0;
+        for (int j = lower_bound; j <= upper_bound; j++) {
+            exp_sum += luminance[j]; //average_exp[j];
+            //hue_sum += average_hue[j];
+            //sat_sum += average_sat[j];
+        }
+        double exp_diff = (exp_sum / (upper_bound - lower_bound + 1));
+        //double hue_diff = (hue_sum / (upper_bound - lower_bound + 1)) - average_hue[i];
+        //double sat_diff = (sat_sum / (upper_bound - lower_bound + 1)) - average_sat[i];
+        //std::cout << "Diffs: " << exp_diff << " " << hue_diff << " " << sat_diff << std::endl;
+
+        cv::Mat image = cv::imread(inputPath + imageNames.at(i));
+        cvtColor(image, image, COLOR_BGR2HSV);
+        Mat hsv[3];
+        split(image, hsv);
+
+        double avg_exp = 0;
+        for(int x = 0; x < image.rows; x++){
+            for(int y = 0; y < image.cols; y++){
+                avg_exp += hsv[2].at<uint8_t>(x,y);
+            }
+        }
+        avg_exp /= (image.rows * image.cols);
+
+        double exp_diff_plus = exp_diff - avg_exp;
+        //double exp_diff_mul = avg_exp / exp_diff;// / avg_exp;
+
+        std::cout << "Check: " << unsigned(hsv[2].at<uint8_t>(24,26)) << " -> ";
+        // hsv[0] += hue_diff;
+        // hsv[1] += sat_diff;
+        //hsv[2] += exp_diff;
+
+        for (int x = 0; x < image.rows; x++) {
+            for (int y = 0; y < image.cols; y++) {
+
+                if (hsv[2].at<uint8_t>(x, y) > 30){
+                    hsv[2].at<uint8_t>(x, y) = saturate_cast<uint8_t>(hsv[2].at<uint8_t>(x, y) + exp_diff_plus);
+                }
+
+            }
+        }
+
+        //hsv[2].convertTo(hsv[2], -1, 1, exp_diff_plus);
+
+        // hsv[2].convertTo(hsv[2], -1, 1, exp_diff);
+        std::cout << unsigned(hsv[2].at<uint8_t>(24,26)) << std::endl;
+
+        merge(hsv, 3, image);
+
+        cvtColor(image, image, COLOR_HSV2BGR);
+
+        imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
+    }
+
+
+}
+
 void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageNames) {
 
     std::string command("mkdir -p ");
@@ -312,9 +435,11 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     // average_point(inputPath, imageNames);
 
-    threshold_point(inputPath, imageNames, 20);
+    //threshold_point(inputPath, imageNames, 20);
 
     //average_frame_exp(inputPath, imageNames);
 
     //average_frame_hsv(inputPath, imageNames);
+
+    experiment(inputPath, imageNames);
 }
