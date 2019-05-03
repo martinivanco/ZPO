@@ -19,8 +19,7 @@ namespace tl {
     void threshold_point(std::string inputPath, std::vector<std::string> imageNames, int threshold);
     void average_frame_exp(std::string inputPath, std::vector<std::string> imageNames);
     void average_frame_hsv(std::string inputPath, std::vector<std::string> imageNames);
-
-    void experiment(std::string inputPath, std::vector<std::string> imageNames);
+    void average_delta_frames(std::string inputPath, std::vector<std::string> imageNames);
     void temporal_matching(std::string inputPath, std::vector<std::string> imageNames);
 }
 

@@ -8,25 +8,30 @@ using namespace cv;
 using namespace cv::detail;
 
 void tl::average_point(std::string inputPath, std::vector<std::string> imageNames) {
+    // Load first 2 images
     cv::Mat image1 = cv::imread(inputPath + imageNames.at(0));
     cv::Mat image2 = cv::imread(inputPath + imageNames.at(1));
 
+    // Write first untouched image to file
     imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image1);
 
     Mat imghsv1(image1.rows, image1.cols, image1.type());
     Mat imghsv2(image2.rows, image2.cols, image2.type());
     Mat imghsv3(image2.rows, image2.cols, image2.type());
 
+    // Change color model of images from RGB to HSV
     cvtColor(image1, imghsv1, COLOR_RGB2HSV);
     cvtColor(image2, imghsv2, COLOR_RGB2HSV);
 
     Mat hsv1[3], hsv2[3], hsv3[3];
 
+    // Split channels
     split(imghsv1, hsv1);
 
     cv::Mat accumulator(imghsv1.rows, imghsv1.cols, CV_32F);
 
     for(int i=2; i < imageNames.size(); i++) {
+        // Load next image and change its color model to HSV
         Mat image3 = imread(inputPath + imageNames.at(i));
 
         cvtColor(image3, imghsv3, COLOR_RGB2HSV);
@@ -34,10 +39,12 @@ void tl::average_point(std::string inputPath, std::vector<std::string> imageName
         split(imghsv2, hsv2);
         split(imghsv3, hsv3);
 
+        // Add brightness of 3 images to accumulator
         accumulateWeighted(hsv1[2], accumulator, 0.3);
         accumulateWeighted(hsv2[2], accumulator, 0.3);
         accumulateWeighted(hsv3[2], accumulator, 0.3);
 
+        // Move result from accumulator back to channel V of HSV model
         convertScaleAbs(accumulator, hsv2[2]);
 
         merge(hsv2, 3, imghsv2);
@@ -109,9 +116,6 @@ void tl::threshold_point(std::string inputPath, std::vector<std::string> imageNa
 }
 
 void tl::average_frame_exp(std::string inputPath, std::vector<std::string> imageNames) {
-    std::string command("mkdir -p ");
-    command += EXP_CORRECTED_TMP_FOLDER;
-    system(command.c_str());
 
     vector<double> average_exp;
 
@@ -166,11 +170,14 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
     vector<double> average_hue;
     vector<double> average_sat;
 
+    // Count average value of each channel for each frame
     for(int i = 0; i < imageNames.size(); i++){
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
 
+        // Convert image color model from BGR to HSV
         cvtColor(image, image, COLOR_BGR2HSV);
 
+        // Split channels
         Mat hsv[3];
         split(image, hsv);
 
@@ -191,27 +198,27 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
         average_hue.push_back(hue_sum / (image.rows * image.cols));
     }
 
-
-    cv::Mat image = cv::imread(inputPath + imageNames.at(0));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(0), image);
-    image = cv::imread(inputPath + imageNames.at(1));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(1), image);
-
     for(int i = 0; i < imageNames.size(); i++){
+        // Load image to edit and change its color model to HSV
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
         cvtColor(image, image, COLOR_BGR2HSV);
 
         int comp = 30;
         int lower_bound = i - comp < 0 ? 0 : i - comp;
         int upper_bound = i + comp > imageNames.size() - 1 ? imageNames.size() - 1 : i + comp;
+
         double exp_sum = 0;
         double hue_sum = 0;
         double sat_sum = 0;
+
+        // Count average value of moving window
         for (int j = lower_bound; j <= upper_bound; j++) {
             exp_sum += average_exp[j];
             hue_sum += average_hue[j];
             sat_sum += average_sat[j];
         }
+
+        // Count difference between current image and moving window
         double exp_diff = (exp_sum / (upper_bound - lower_bound + 1)) - average_exp[i];
         double hue_diff = (hue_sum / (upper_bound - lower_bound + 1)) - average_hue[i];
         double sat_diff = (sat_sum / (upper_bound - lower_bound + 1)) - average_sat[i];
@@ -219,34 +226,32 @@ void tl::average_frame_hsv(std::string inputPath, std::vector<std::string> image
         Mat hsv[3];
         split(image, hsv);
 
+        // Add difference to each channel
         hsv[0] += hue_diff;
         hsv[1] += sat_diff;
         hsv[2] += exp_diff;
 
-        merge(hsv, 3, image);
+        merge(hsv, 3, image);   // Merge channels
 
+        // Change color model back to BGR and write image to file
         cvtColor(image, image, COLOR_HSV2BGR);
-
         imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
     }
-
-    image = cv::imread(inputPath + imageNames.at(imageNames.size()-2));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-2), image);
-    image = cv::imread(inputPath + imageNames.at(imageNames.size()-1));
-    imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(imageNames.size()-1), image);
 }
 
-void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) {
+void tl::average_delta_frames(std::string inputPath, std::vector<std::string> imageNames) {
 
+    // Vectors of average value for each channel
     vector<double> avg_b;
     vector<double> avg_g;
     vector<double> avg_r;
 
+    // Load first image and split its channels
     Mat img0 = imread(inputPath + imageNames.at(0));
-
     Mat bgr0[3];
     split(img0, bgr0);
 
+    // Count average value of each channel
     double avg_g0 = 0, avg_b0 = 0, avg_r0 = 0;
     for(int x = 0; x < bgr0[0].rows; x++) {
         for(int y = 0; y < bgr0[0].cols; y++) {
@@ -260,6 +265,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
     avg_g0 /= (img0.rows * img0.cols);
     avg_r0 /= (img0.rows * img0.cols);
 
+    // Push average values to vectors
     avg_b.push_back(avg_b0);
     avg_g.push_back(avg_g0);
     avg_r.push_back(avg_r0);
@@ -274,6 +280,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
     img1 = imread(inputPath + imageNames.at(1));
     split(img1, bgr1);
 
+    // Set threshold for minimal difference between 2 frames
     double threshold = 30;
 
     for(int i = 1; i < imageNames.size()-1; i++) {
@@ -282,6 +289,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
 
         split(img2, bgr2);
 
+        // Count difference between 2 frames for each channel
         delta_b = bgr1[0] - bgr2[0];
         delta_g = bgr1[1] - bgr2[1];
         delta_r = bgr1[2] - bgr2[2];
@@ -290,17 +298,17 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         double mean_delta_g = 0;
         double mean_delta_r = 0;
 
+        // Count mean value of difference between 2 frames
         for(int x = 0; x < delta_b.rows; x++){
             for(int y = 0; y < delta_b.cols; y++){
 
+                // Cut off differences over threshold (moving objects)
                 if(abs(delta_b.at<double>(x,y)) > threshold){
                     delta_b.at<double>(x,y) = 0;
                 }
-
                 if(abs(delta_g.at<double>(x,y)) > threshold){
                     delta_g.at<double>(x,y) = 0;
                 }
-
                 if(abs(delta_r.at<double>(x,y)) > threshold){
                     delta_r.at<double>(x,y) = 0;
                 }
@@ -315,10 +323,12 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         mean_delta_g /= (delta_b.cols * delta_b.rows);
         mean_delta_r /= (delta_b.cols * delta_b.rows);
 
+        // Set new average values from previous frame adding mean delta value
         avg_b.push_back((avg_b[i - 1]) + mean_delta_b);
         avg_g.push_back((avg_g[i - 1]) + mean_delta_g);
         avg_r.push_back((avg_r[i - 1]) + mean_delta_r);
 
+        // Shift image for next iteration
         bgr1[0] = bgr2[0].clone();
         bgr1[1] = bgr2[1].clone();
         bgr1[2] = bgr2[2].clone();
@@ -326,7 +336,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
 
 
     for(int i = 0; i < imageNames.size(); i++){
-
+        // Set size of moving window for average values
         int window = 30;
         int lower_bound = i - window < 0 ? 0 : i - window;
         int upper_bound = i + window > imageNames.size() - 1 ? imageNames.size() - 1 : i + window;
@@ -335,6 +345,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         double sum_g = 0;
         double sum_r = 0;
 
+        // Count average value of each channel in moving window
         for (int j = lower_bound; j <= upper_bound; j++) {
             sum_b += avg_b[j];
             sum_g += avg_g[j];
@@ -345,8 +356,10 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         double diff_g = (sum_g / (upper_bound - lower_bound + 1));
         double diff_r = (sum_r / (upper_bound - lower_bound + 1));
 
+        // Load cuurent image to edit
         cv::Mat image = cv::imread(inputPath + imageNames.at(i));
 
+        // Split channels to blue, green and red
         Mat bgr[3];
         split(image, bgr);
 
@@ -354,6 +367,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         double img_avg_g = 0;
         double img_avg_r = 0;
 
+        // Count average value of each channel in current image
         for(int x = 0; x < image.rows; x++){
             for(int y = 0; y < image.cols; y++){
                 img_avg_b += bgr[0].at<uint8_t>(x,y);
@@ -366,12 +380,15 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
         img_avg_g /= (image.rows * image.cols);
         img_avg_r /= (image.rows * image.cols);
 
+        // Difference between average in window and current image
         diff_b -= img_avg_b;
         diff_g -= img_avg_g;
         diff_r -= img_avg_r;
 
+        // Add difference to current image
         for (int x = 0; x < image.rows; x++) {
             for (int y = 0; y < image.cols; y++) {
+                // Adding difference only to pixels brighter than 20 (/255)
                 if(bgr[0].at<uint8_t>(x, y) > 20 and bgr[1].at<uint8_t>(x, y) > 20 and bgr[2].at<uint8_t>(x, y) > 20){
                     bgr[0].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(bgr[0].at<uint8_t>(x, y)) + diff_b);
                     bgr[1].at<uint8_t>(x, y) = saturate_cast<uint8_t>(double(bgr[1].at<uint8_t>(x, y)) + diff_g);
@@ -380,11 +397,10 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
             }
         }
 
+        // Merge channels and write final image to file
         merge(bgr, 3, image);
-
         imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), image);
     }
-
 
 }
 
@@ -452,7 +468,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     // average_frame_hsv(inputPath, imageNames);
 
-    // experiment(inputPath, imageNames);
+    // average_delta_frames(inputPath, imageNames);
 
     temporal_matching(inputPath, imageNames);
 }
