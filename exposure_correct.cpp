@@ -411,40 +411,52 @@ void tl::average_delta_frames(std::string inputPath, std::vector<std::string> im
 }
 
 void tl::temporal_matching(std::string inputPath, std::vector<std::string> imageNames) {
-    // Temporal pixel averaging method - author: Martin Ivanco
-    int nf = 5; // needs to be odd
+    // temporal pixel averaging method - author: Martin Ivanco
+
+    // number of frames averaged - needs to be odd
+    int nf = 5;
     Mat frames[nf];
 
+    // load first nf images
     for (int i = 0; i < nf; i++) {
         frames[i] = cv::imread(inputPath + imageNames.at(i));
         cv::cvtColor(frames[i], frames[i], COLOR_BGR2HSV);
     }
 
+    // get width and height for future use
     int width = frames[0].cols;
     int height = frames[0].rows;
 
+    // export first nf / 2 frames - we don't have enough frames to average them
     for (int i = 0; i < nf / 2; i++) {
         cv::cvtColor(frames[i], frames[i], COLOR_HSV2BGR);
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), frames[i]);
     }
 
+    // main loop
     for (int i = nf / 2; i < imageNames.size() - nf / 2; i++) {
+        // create new frame and go through it pixel by pixel
         Mat frame(height, width, CV_8UC3);
         for(int row = 0; row < height; row++) {
             for(int col = 0; col < width; col++) {
+                // count sum of pixel brightnesses at this position in span of nf frames
                 double sum = 0;
                 for(int j = 0; j < nf; j++) {
                     sum += frames[j].at<Vec3b>(row, col)[2];
                 }
+                // copy over hue and saturation values
                 frame.at<Vec3b>(row, col)[0] = frames[nf / 2].at<Vec3b>(row, col)[0];
                 frame.at<Vec3b>(row, col)[1] = frames[nf / 2].at<Vec3b>(row, col)[1];
+                // average the sum of brightness values
                 frame.at<Vec3b>(row, col)[2] = saturate_cast<uint8_t>(sum / nf);
             }
         }
 
+        // export the new frame
         cv::cvtColor(frame, frame, COLOR_HSV2BGR);
         cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), frame);
         
+        // load next frame if there is one
         if (i + 1 != imageNames.size() - nf / 2) {
             for(int j = 0; j < nf - 1; j++) {
                 frames[j] = frames[j + 1];
@@ -454,6 +466,7 @@ void tl::temporal_matching(std::string inputPath, std::vector<std::string> image
         }
     }
 
+    // export last nf / 2 frames - we don't have enough frames to average them
     int h = nf - imageNames.size();
     for (int i = imageNames.size() - nf / 2; i < imageNames.size(); i++) {
         cv::cvtColor(frames[i + h], frames[i + h], COLOR_HSV2BGR);
