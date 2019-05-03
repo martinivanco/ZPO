@@ -21,6 +21,7 @@ namespace tl {
     void average_frame_hsv(std::string inputPath, std::vector<std::string> imageNames);
 
     void experiment(std::string inputPath, std::vector<std::string> imageNames);
+    void temporal_matching(std::string inputPath, std::vector<std::string> imageNames);
 }
 
 #endif //ZPO_EXP_CORRECT

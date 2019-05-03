@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
     // get rid of temporary exposure corrected images
     command = "rm -rf ";
     command += EXP_CORRECTED_TMP_FOLDER;
-    //system(command.c_str());
+    system(command.c_str());
 
     output.release();
     return 0;

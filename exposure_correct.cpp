@@ -388,6 +388,56 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
 
 }
 
+void tl::temporal_matching(std::string inputPath, std::vector<std::string> imageNames) {
+    int nf = 5; // needs to be odd
+    Mat frames[nf];
+
+    for (int i = 0; i < nf; i++) {
+        frames[i] = cv::imread(inputPath + imageNames.at(i));
+        cv::cvtColor(frames[i], frames[i], COLOR_BGR2HSV);
+    }
+
+    int width = frames[0].cols;
+    int height = frames[0].rows;
+
+    for (int i = 0; i < nf / 2; i++) {
+        cv::cvtColor(frames[i], frames[i], COLOR_HSV2BGR);
+        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), frames[i]);
+    }
+
+    for (int i = nf / 2; i < imageNames.size() - nf / 2; i++) {
+        Mat frame(height, width, CV_8UC3);
+        for(int row = 0; row < height; row++) {
+            for(int col = 0; col < width; col++) {
+                double sum = 0;
+                for(int j = 0; j < nf; j++) {
+                    sum += frames[j].at<Vec3b>(row, col)[2];
+                }
+                frame.at<Vec3b>(row, col)[0] = frames[nf / 2].at<Vec3b>(row, col)[0];
+                frame.at<Vec3b>(row, col)[1] = frames[nf / 2].at<Vec3b>(row, col)[1];
+                frame.at<Vec3b>(row, col)[2] = saturate_cast<uint8_t>(sum / nf);
+            }
+        }
+
+        cv::cvtColor(frame, frame, COLOR_HSV2BGR);
+        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), frame);
+        
+        if (i + 1 != imageNames.size() - nf / 2) {
+            for(int j = 0; j < nf - 1; j++) {
+                frames[j] = frames[j + 1];
+            }
+            frames[nf - 1] = cv::imread(inputPath + imageNames.at(i + nf / 2));
+            cv::cvtColor(frames[nf - 1], frames[nf - 1], COLOR_BGR2HSV);
+        }
+    }
+
+    int h = nf - imageNames.size();
+    for (int i = imageNames.size() - nf / 2; i < imageNames.size(); i++) {
+        cv::cvtColor(frames[i + h], frames[i + h], COLOR_HSV2BGR);
+        cv::imwrite(EXP_CORRECTED_TMP_FOLDER + imageNames.at(i), frames[i + h]);
+    }
+}
+
 void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageNames) {
 
     std::string command("mkdir -p ");
@@ -402,5 +452,7 @@ void tl::exposure_correct(std::string inputPath, std::vector<std::string> imageN
 
     // average_frame_hsv(inputPath, imageNames);
 
-    experiment(inputPath, imageNames);
+    // experiment(inputPath, imageNames);
+
+    temporal_matching(inputPath, imageNames);
 }
