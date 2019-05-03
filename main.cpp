@@ -1,3 +1,9 @@
+// =========================================== //
+// File: main.cpp                              //
+// Project: ZPO - Timelapse correction         //
+// Author: Martin Ivanco (xivanc03)            //
+// =========================================== //
+
 #include <string.h>
 #include <stdio.h>
 #include <dirent.h>

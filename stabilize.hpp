@@ -1,3 +1,9 @@
+// =========================================== //
+// File: stabilize.hpp                         //
+// Project: ZPO - Timelapse correction         //
+// Author: Martin Ivanco (xivanc03)            //
+// =========================================== //
+
 #ifndef ZPO_STABILIZE
 #define ZPO_STABILIZE
 

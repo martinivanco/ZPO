@@ -1,3 +1,9 @@
+// =========================================== //
+// File: exposure_correct.hpp                  //
+// Project: ZPO - Timelapse correction         //
+// Author: Miroslav Kazimir (xkazim00)         //
+// =========================================== //
+
 #ifndef ZPO_EXP_CORRECT
 #define ZPO_EXP_CORRECT
 

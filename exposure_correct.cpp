@@ -1,3 +1,9 @@
+// =========================================== //
+// File: exposure_correct.cpp                  //
+// Project: ZPO - Timelapse correction         //
+// Author: Miroslav Kazimir (xkazim00)         //
+// =========================================== //
+
 #ifdef CUSTOM_OPENCV_LOCATION
 #include <cv.hpp>
 #endif //CUSTOM_OPENCV_LOCATION
@@ -389,6 +395,7 @@ void tl::experiment(std::string inputPath, std::vector<std::string> imageNames) 
 }
 
 void tl::temporal_matching(std::string inputPath, std::vector<std::string> imageNames) {
+    // Temporal pixel averaging method - author: Martin Ivanco
     int nf = 5; // needs to be odd
     Mat frames[nf];
 

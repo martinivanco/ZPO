@@ -1,3 +1,9 @@
+## =========================================== ##
+## File: CMakeLists.txt                        ##
+## Project: ZPO - Timelapse correction         ##
+## Author: Martin Ivanco (xivanc03)            ##
+## =========================================== ##
+
 # cmake needs this line
 cmake_minimum_required(VERSION 3.1)
 

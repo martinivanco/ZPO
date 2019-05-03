@@ -1,3 +1,9 @@
+// =========================================== //
+// File: stabilize.cpp                         //
+// Project: ZPO - Timelapse correction         //
+// Author: Martin Ivanco (xivanc03)            //
+// =========================================== //
+
 #include "stabilize.hpp"
 
 tl::Transform::Transform(double in_x, double in_y, double in_angle) {
