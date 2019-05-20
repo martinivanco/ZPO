@@ -1,10 +1,9 @@
+#!/bin/sh
 ## =========================================== ##
 ## File: build.sh                              ##
 ## Project: ZPO - Timelapse correction         ##
 ## Author: Martin Ivanco (xivanc03)            ##
 ## =========================================== ##
-
-#!/bin/sh
 
 run_type=$1
 
